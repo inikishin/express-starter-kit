@@ -3,7 +3,7 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-require('dotenv').config()
+var dotenv = require('dotenv').config();
 
 var app = express();
 
@@ -17,9 +17,28 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+
+// MongoDB begin
+const mongo_config = require('./database/config/db');
+const mongoose = require('mongoose');
+mongoose.connect(mongo_config.url).then(
+  () => {
+    console.log('Connection to MongoDB established');
+  },
+  (error) => {
+    console.log('Error when try to connect MongoDB:', error);
+  }
+);
+global.DB = mongoose;
+// MongoDB end
+
+
+// Routes begin
 app.use('/', require('./routes/index'));
 app.use('/users', require('./routes/users'));
 app.use('/entities', require('./routes/entity'));
+// Routes end
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -36,5 +55,6 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
+
 
 module.exports = app;
