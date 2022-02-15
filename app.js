@@ -1,11 +1,12 @@
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
-var dotenv = require('dotenv').config();
+const createError = require('http-errors');
+const express = require('express');
+const passport = require('passport');
+const path = require('path');
+const cookieParser = require('cookie-parser');
+const logger = require('morgan');
+const dotenv = require('dotenv').config();
 
-var app = express();
+const app = express();
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -21,7 +22,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // MongoDB begin
 const mongo_config = require('./database/config/db');
 const mongoose = require('mongoose');
-mongoose.connect(mongo_config.url).then(
+mongoose.connect(mongo_config.url, { useNewUrlParser: true }).then(
   () => {
     console.log('Connection to MongoDB established');
   },
@@ -29,14 +30,16 @@ mongoose.connect(mongo_config.url).then(
     console.log('Error when try to connect MongoDB:', error);
   }
 );
+mongoose.connection.on('error', error => console.log(error) );
 global.DB = mongoose;
 // MongoDB end
 
+require('./middleware/auth');
 
 // Routes begin
 app.use('/', require('./routes/index'));
-app.use('/users', require('./routes/users'));
-app.use('/entities', require('./routes/entity'));
+app.use('/auth', require('./routes/auth'));
+app.use('/entities', passport.authenticate('jwt', { session: false }),require('./routes/entity'));
 // Routes end
 
 
